@@ -4,6 +4,7 @@ import { useQrStore } from '../store/useQrStore';
 import { useQrHistoryStore } from '../store/useQrHistoryStore';
 import JSZip from 'jszip';
 import jsPDF from 'jspdf';
+import { Copy, Check } from 'lucide-react';
 
 export const CustomQrRenderer: React.FC = () => {
   const qrOptions = useQrStore((state) => state.options);
@@ -13,6 +14,7 @@ export const CustomQrRenderer: React.FC = () => {
   const ref = useRef<HTMLDivElement>(null);
   const [qrCode] = useState<QRCodeStyling>(new QRCodeStyling(qrOptions));
   const [isGeneratingBatch, setIsGeneratingBatch] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     if (ref.current) {
@@ -25,7 +27,6 @@ export const CustomQrRenderer: React.FC = () => {
   }, [qrCode, qrOptions]);
 
   const saveToHistory = () => {
-    // Generate a quick title based on the data
     const title = typeof qrOptions.data === 'string' && qrOptions.data.length > 30
       ? qrOptions.data.substring(0, 30) + '...'
       : String(qrOptions.data || 'Unknown QR');
@@ -37,7 +38,6 @@ export const CustomQrRenderer: React.FC = () => {
 
     if (ext === 'pdf') {
       try {
-        // We get the blob as png and put it into pdf
         const blob = await qrCode.getRawData("png");
         if (blob) {
           const url = URL.createObjectURL(blob as Blob);
@@ -61,6 +61,24 @@ export const CustomQrRenderer: React.FC = () => {
     });
   };
 
+  const handleCopyToClipboard = async () => {
+    try {
+      const blob = await qrCode.getRawData("png") as Blob;
+      if (blob) {
+        await navigator.clipboard.write([
+          new ClipboardItem({
+            [blob.type]: blob
+          })
+        ]);
+        setCopied(true);
+        saveToHistory();
+        setTimeout(() => setCopied(false), 2000);
+      }
+    } catch (err) {
+      console.error("Failed to copy image to clipboard", err);
+    }
+  };
+
   const handleBatchDownload = async () => {
     if (!batchData || batchData.length === 0) return;
 
@@ -73,7 +91,6 @@ export const CustomQrRenderer: React.FC = () => {
     if (folder) {
       for (let i = 0; i < batchData.length; i++) {
         const data = batchData[i];
-        // Create a temporary qr code generator for each batch item
         const tempQr = new QRCodeStyling({
           ...qrOptions,
           data
@@ -120,31 +137,41 @@ export const CustomQrRenderer: React.FC = () => {
           </button>
         </div>
       ) : (
-        <div className="flex flex-wrap gap-2 justify-center">
+        <div className="flex flex-col gap-4 w-full">
           <button
-            onClick={() => handleDownload('png')}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm"
+            onClick={handleCopyToClipboard}
+            className="flex items-center justify-center gap-2 w-full px-4 py-3 bg-gray-100 text-gray-800 rounded-lg hover:bg-gray-200 transition-colors font-bold text-sm"
           >
-            Download PNG
+            {copied ? <Check className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4" />}
+            {copied ? 'Copied to Clipboard' : 'Copy Image to Clipboard'}
           </button>
-          <button
-            onClick={() => handleDownload('svg')}
-            className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium text-sm"
-          >
-            Download SVG
-          </button>
-          <button
-            onClick={() => handleDownload('pdf')}
-            className="px-4 py-2 bg-rose-600 text-white rounded-lg hover:bg-rose-700 transition-colors font-medium text-sm"
-          >
-            Download PDF
-          </button>
-          <button
-            onClick={() => handleDownload('jpeg')}
-            className="px-4 py-2 bg-violet-600 text-white rounded-lg hover:bg-violet-700 transition-colors font-medium text-sm"
-          >
-            Download JPEG
-          </button>
+
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              onClick={() => handleDownload('png')}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm"
+            >
+              PNG
+            </button>
+            <button
+              onClick={() => handleDownload('svg')}
+              className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium text-sm"
+            >
+              SVG
+            </button>
+            <button
+              onClick={() => handleDownload('pdf')}
+              className="px-4 py-2 bg-rose-600 text-white rounded-lg hover:bg-rose-700 transition-colors font-medium text-sm"
+            >
+              PDF
+            </button>
+            <button
+              onClick={() => handleDownload('jpeg')}
+              className="px-4 py-2 bg-violet-600 text-white rounded-lg hover:bg-violet-700 transition-colors font-medium text-sm"
+            >
+              JPEG
+            </button>
+          </div>
         </div>
       )}
     </div>

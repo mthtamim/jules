@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQrStore } from '../store/useQrStore';
 
 export const DesignSettings: React.FC = () => {
@@ -11,10 +11,23 @@ export const DesignSettings: React.FC = () => {
   const setBackgroundOptions = useQrStore((state) => state.setBackgroundOptions);
   const setImageOptions = useQrStore((state) => state.setImageOptions);
 
-  const [useGradient, setUseGradient] = useState(false);
-  const [gradientColor1, setGradientColor1] = useState(options.dotsOptions?.color || '#000000');
-  const [gradientColor2, setGradientColor2] = useState('#aa3bff');
-  const [gradientType, setGradientType] = useState<'linear' | 'radial'>('linear');
+  const [useGradient, setUseGradient] = useState(!!options.dotsOptions?.gradient);
+  const [gradientColor1, setGradientColor1] = useState(options.dotsOptions?.gradient?.colorStops?.[0]?.color || options.dotsOptions?.color || '#000000');
+  const [gradientColor2, setGradientColor2] = useState(options.dotsOptions?.gradient?.colorStops?.[1]?.color || '#aa3bff');
+  const [gradientType, setGradientType] = useState<'linear' | 'radial'>(options.dotsOptions?.gradient?.type === 'radial' ? 'radial' : 'linear');
+
+  // Synchronize local state with global store when options change (e.g., from History Restore)
+  useEffect(() => {
+      const hasGradient = !!options.dotsOptions?.gradient;
+      setUseGradient(hasGradient);
+      if (hasGradient) {
+          setGradientColor1(options.dotsOptions?.gradient?.colorStops?.[0]?.color || '#000000');
+          setGradientColor2(options.dotsOptions?.gradient?.colorStops?.[1]?.color || '#aa3bff');
+          setGradientType(options.dotsOptions?.gradient?.type === 'radial' ? 'radial' : 'linear');
+      } else {
+          setGradientColor1(options.dotsOptions?.color || '#000000');
+      }
+  }, [options.dotsOptions]);
 
   const updateGradient = (c1: string, c2: string, type: 'linear' | 'radial', active: boolean) => {
     if (active) {
@@ -86,7 +99,7 @@ export const DesignSettings: React.FC = () => {
           <div>
             <div className="flex items-center justify-between mb-2">
               <label className="block text-sm font-medium text-gray-700">QR Code Color</label>
-              <label className="flex items-center text-xs">
+              <label className="flex items-center text-xs cursor-pointer">
                 <input
                   type="checkbox"
                   checked={useGradient}
@@ -118,8 +131,8 @@ export const DesignSettings: React.FC = () => {
             ) : (
               <div className="flex flex-col gap-2">
                 <div className="flex gap-2">
-                  <input type="color" value={gradientColor1} onChange={(e) => { setGradientColor1(e.target.value); updateGradient(e.target.value, gradientColor2, gradientType, true); }} className="w-8 h-8 p-0" />
-                  <input type="color" value={gradientColor2} onChange={(e) => { setGradientColor2(e.target.value); updateGradient(gradientColor1, e.target.value, gradientType, true); }} className="w-8 h-8 p-0" />
+                  <input type="color" value={gradientColor1} onChange={(e) => { setGradientColor1(e.target.value); updateGradient(e.target.value, gradientColor2, gradientType, true); }} className="w-8 h-8 p-0 cursor-pointer" />
+                  <input type="color" value={gradientColor2} onChange={(e) => { setGradientColor2(e.target.value); updateGradient(gradientColor1, e.target.value, gradientType, true); }} className="w-8 h-8 p-0 cursor-pointer" />
                   <select
                     value={gradientType}
                     onChange={(e) => { setGradientType(e.target.value as any); updateGradient(gradientColor1, gradientColor2, e.target.value as any, true); }}
@@ -133,15 +146,29 @@ export const DesignSettings: React.FC = () => {
             )}
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Background Color</label>
+            <div className="flex items-center justify-between mb-2">
+              <label className="block text-sm font-medium text-gray-700">Background Color</label>
+              <label className="flex items-center text-xs cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={options.backgroundOptions?.color === 'transparent'}
+                  onChange={(e) => setBackgroundOptions({ color: e.target.checked ? 'transparent' : '#ffffff' })}
+                  className="mr-1"
+                />
+                Transparent
+              </label>
+            </div>
             <div className="flex items-center gap-3">
               <input
                 type="color"
-                value={options.backgroundOptions?.color || '#ffffff'}
+                value={options.backgroundOptions?.color === 'transparent' ? '#ffffff' : (options.backgroundOptions?.color || '#ffffff')}
                 onChange={(e) => setBackgroundOptions({ color: e.target.value })}
-                className="w-10 h-10 rounded cursor-pointer border-0 p-0"
+                disabled={options.backgroundOptions?.color === 'transparent'}
+                className="w-10 h-10 rounded cursor-pointer border-0 p-0 disabled:opacity-50"
               />
-              <span className="text-sm font-mono text-gray-600">{options.backgroundOptions?.color || '#ffffff'}</span>
+              <span className="text-sm font-mono text-gray-600">
+                {options.backgroundOptions?.color === 'transparent' ? 'Transparent' : (options.backgroundOptions?.color || '#ffffff')}
+              </span>
             </div>
           </div>
         </div>
