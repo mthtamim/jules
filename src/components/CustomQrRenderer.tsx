@@ -4,7 +4,7 @@ import { useQrStore } from '../store/useQrStore';
 import { useQrHistoryStore } from '../store/useQrHistoryStore';
 import JSZip from 'jszip';
 import jsPDF from 'jspdf';
-import { Copy, Check } from 'lucide-react';
+import { Copy, Check, Download } from 'lucide-react';
 
 export const CustomQrRenderer: React.FC = () => {
   const qrOptions = useQrStore((state) => state.options);
@@ -120,54 +120,64 @@ export const CustomQrRenderer: React.FC = () => {
   const isBatchMode = batchData && batchData.length > 0;
 
   return (
-    <div className="flex flex-col items-center justify-center p-6 bg-white rounded-xl shadow-lg w-full max-w-md">
-      <div ref={ref} className="mb-6 rounded-lg overflow-hidden border border-gray-100 shadow-sm" />
+    <div className="flex flex-col items-center justify-center p-6 bg-white dark:bg-gray-800 rounded-2xl shadow-sm hover:shadow-md border border-gray-100 dark:border-gray-700 w-full transition-all duration-300">
+      <div
+        ref={ref}
+        className="mb-6 rounded-xl overflow-hidden border border-gray-100 dark:border-gray-700 shadow-sm bg-white flex justify-center items-center w-full min-h-[300px]"
+        style={{
+           /* This container ensures the QR canvas stays centered regardless of size */
+           display: 'flex',
+           justifyContent: 'center',
+           alignItems: 'center'
+        }}
+      />
 
       {isBatchMode ? (
-        <div className="flex flex-col gap-3 w-full">
-          <p className="text-center text-sm font-medium text-gray-700">
+        <div className="flex flex-col gap-3 w-full animate-in fade-in zoom-in duration-300">
+          <p className="text-center text-sm font-semibold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 py-2 rounded-lg">
             Batch Mode: {batchData.length} items ready
           </p>
           <button
             onClick={handleBatchDownload}
             disabled={isGeneratingBatch}
-            className="w-full px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-bold text-sm disabled:opacity-50"
+            className="w-full flex items-center justify-center gap-2 px-4 py-3.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors font-bold text-sm shadow-md shadow-blue-500/30 disabled:opacity-50"
           >
-            {isGeneratingBatch ? 'Generating ZIP...' : 'Download Batch ZIP'}
+            <Download className="w-4 h-4" />
+            {isGeneratingBatch ? 'Generating ZIP Archive...' : 'Download Batch ZIP'}
           </button>
         </div>
       ) : (
-        <div className="flex flex-col gap-4 w-full">
+        <div className="flex flex-col gap-3 w-full animate-in fade-in duration-300">
           <button
             onClick={handleCopyToClipboard}
-            className="flex items-center justify-center gap-2 w-full px-4 py-3 bg-gray-100 text-gray-800 rounded-lg hover:bg-gray-200 transition-colors font-bold text-sm"
+            className="flex items-center justify-center gap-2 w-full px-4 py-3 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-100 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors font-bold text-sm border border-gray-200 dark:border-gray-600"
           >
-            {copied ? <Check className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4" />}
+            {copied ? <Check className="w-4 h-4 text-green-600 dark:text-green-400" /> : <Copy className="w-4 h-4" />}
             {copied ? 'Copied to Clipboard' : 'Copy Image to Clipboard'}
           </button>
 
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-2 gap-3">
             <button
               onClick={() => handleDownload('png')}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm"
+              className="px-4 py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all active:scale-95 font-semibold text-sm shadow-sm shadow-blue-500/20"
             >
               PNG
             </button>
             <button
               onClick={() => handleDownload('svg')}
-              className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium text-sm"
+              className="px-4 py-2.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-all active:scale-95 font-semibold text-sm shadow-sm shadow-indigo-500/20"
             >
               SVG
             </button>
             <button
               onClick={() => handleDownload('pdf')}
-              className="px-4 py-2 bg-rose-600 text-white rounded-lg hover:bg-rose-700 transition-colors font-medium text-sm"
+              className="px-4 py-2.5 bg-rose-600 text-white rounded-xl hover:bg-rose-700 transition-all active:scale-95 font-semibold text-sm shadow-sm shadow-rose-500/20"
             >
               PDF
             </button>
             <button
               onClick={() => handleDownload('jpeg')}
-              className="px-4 py-2 bg-violet-600 text-white rounded-lg hover:bg-violet-700 transition-colors font-medium text-sm"
+              className="px-4 py-2.5 bg-violet-600 text-white rounded-xl hover:bg-violet-700 transition-all active:scale-95 font-semibold text-sm shadow-sm shadow-violet-500/20"
             >
               JPEG
             </button>
